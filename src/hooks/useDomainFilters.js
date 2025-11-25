@@ -2,6 +2,8 @@ import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { filterDomains, sanitizeList } from '../utils/domainFilters';
 
 const SOURCE_URL = 'https://registro.br/dominio/lista-processo-liberacao.txt';
+const PROXY_SOURCE_URL =
+  'https://api.allorigins.win/raw?url=https%3A%2F%2Fregistro.br%2Fdominio%2Flista-processo-liberacao.txt';
 
 export function useDomainFilters() {
   const [rawList, setRawList] = useState([]);
@@ -28,12 +30,33 @@ export function useDomainFilters() {
   useEffect(() => {
     const controller = new AbortController();
 
+    async function fetchDomainList(signal) {
+      const sources = [SOURCE_URL, PROXY_SOURCE_URL];
+      let lastError = null;
+
+      for (const url of sources) {
+        try {
+          const response = await fetch(url, { signal });
+
+          if (!response.ok) {
+            lastError = new Error(`Falha ao baixar a lista de domínios (${response.status})`);
+            continue;
+          }
+
+          return response.text();
+        } catch (err) {
+          if (err.name === 'AbortError') throw err;
+          lastError = err;
+        }
+      }
+
+      throw lastError || new Error('Falha ao baixar a lista de domínios');
+    }
+
     async function load() {
       try {
         setLoading(true);
-        const response = await fetch(SOURCE_URL, { signal: controller.signal });
-        if (!response.ok) throw new Error('Falha ao baixar a lista de domínios');
-        const text = await response.text();
+        const text = await fetchDomainList(controller.signal);
         setRawList(sanitizeList(text));
       } catch (err) {
         if (err.name !== 'AbortError') {
