@@ -3,7 +3,7 @@
 Aplicação React para explorar rapidamente a lista oficial de domínios do registro.br em processo de liberação. O app remove comentários da fonte, calcula métricas de legibilidade e oferece filtros avançados e ordenação ranqueada.
 
 ## Funcionalidades
-- Download direto da lista em `https://registro.br/dominio/lista-processo-liberacao.txt` com limpeza automática de comentários.
+- Fonte de dados embutida em `public/lista-processo-liberacao.txt` (cópia oficial) com limpeza automática de comentários, sem depender de requisições ao registro.br.
 - Filtros por texto, prefixo/sufixo, regex adicional, tamanho mínimo/máximo, hífens, presença de números e apenas letras.
 - Heurística de pontuação que prioriza legibilidade (relação vogais/consoantes), comprimento reduzido e poucos hífens.
 - Paginação incremental para renderizar rapidamente milhares de resultados.
