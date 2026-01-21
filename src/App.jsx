@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { FilterPanel } from './components/FilterPanel';
 import { DomainTable } from './components/DomainTable';
 import { useDomainFilters } from './hooks/useDomainFilters';
@@ -42,9 +42,30 @@ function Metric({ label, value, helper }) {
 }
 
 function App() {
-  const { filters, updateFilter, resetFilters, domains, total, loading, error } = useDomainFilters();
+  const [fileName, setFileName] = useState('');
+  const [fileText, setFileText] = useState('');
+  const [uploadError, setUploadError] = useState(null);
+
+  const { filters, updateFilter, resetFilters, domains, total, loading, error } = useDomainFilters(fileText);
 
   const qualitySlice = useMemo(() => domains.slice(0, 12), [domains]);
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      setFileText(text);
+      setFileName(file.name);
+      setUploadError(null);
+    } catch (err) {
+      setUploadError('Não foi possível ler o arquivo selecionado');
+      setFileText('');
+      setFileName('');
+    }
+  };
 
   return (
     <div className="app-shell">
@@ -58,7 +79,28 @@ function App() {
         </p>
       </div>
 
-      {error && <div className="card">Falha ao baixar a lista: {error}</div>}
+      <div className="card">
+        <div className="controls-row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h3>Envie o arquivo de domínios (.txt)</h3>
+            <p className="muted" style={{ marginTop: 4 }}>
+              A lista é processada apenas no navegador e não é enviada para o servidor.
+            </p>
+            <input type="file" accept=".txt" onChange={handleFileChange} />
+            {fileName && (
+              <p className="muted" style={{ marginTop: 6 }}>
+                Arquivo carregado: <strong>{fileName}</strong>
+              </p>
+            )}
+          </div>
+          <div className="badge">Arraste e solte ou clique para escolher</div>
+        </div>
+        {(uploadError || error) && (
+          <div style={{ marginTop: 8 }} className="muted">
+            {uploadError || error}
+          </div>
+        )}
+      </div>
 
       <FilterPanel filters={filters} onChange={updateFilter} onReset={resetFilters} />
 

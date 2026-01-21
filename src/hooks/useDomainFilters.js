@@ -1,11 +1,9 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { filterDomains, sanitizeList } from '../utils/domainFilters';
 
-const SOURCE_URL = `${import.meta.env.BASE_URL}lista-processo-liberacao.txt`;
-
-export function useDomainFilters() {
+export function useDomainFilters(sourceText) {
   const [rawList, setRawList] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     query: '',
@@ -26,41 +24,25 @@ export function useDomainFilters() {
   const deferredQuery = useDeferredValue(filters.query);
 
   useEffect(() => {
-    const controller = new AbortController();
-
-    async function fetchDomainList(signal) {
-      try {
-        const response = await fetch(SOURCE_URL, { signal });
-
-        if (!response.ok) {
-          throw new Error(`Falha ao carregar a lista local (${response.status})`);
-        }
-
-        return response.text();
-      } catch (err) {
-        if (err.name === 'AbortError') throw err;
-        throw err;
-      }
+    if (!sourceText) {
+      setRawList([]);
+      setError(null);
+      setLoading(false);
+      return;
     }
 
-    async function load() {
-      try {
-        setLoading(true);
-        const text = await fetchDomainList(controller.signal);
-        setRawList(sanitizeList(text));
-      } catch (err) {
-        if (err.name !== 'AbortError') {
-          setError(err.message);
-        }
-      } finally {
-        setLoading(false);
-      }
+    setLoading(true);
+
+    try {
+      setRawList(sanitizeList(sourceText));
+      setError(null);
+    } catch (err) {
+      setError('Falha ao processar o arquivo enviado');
+      setRawList([]);
+    } finally {
+      setLoading(false);
     }
-
-    load();
-
-    return () => controller.abort();
-  }, []);
+  }, [sourceText]);
 
   const result = useMemo(() => {
     return filterDomains(rawList, { ...filters, query: deferredQuery });

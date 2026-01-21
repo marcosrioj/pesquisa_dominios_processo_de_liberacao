@@ -19,7 +19,7 @@ export function FilterPanel({ filters, onChange, onReset }) {
   return (
     <div className="card">
       <div className="header">
-        <h2>Filtros inteligentes</h2>
+        <h2>Filtros</h2>
         <p>
           Combine filtros avançados para encontrar nomes memoráveis, curtos e com alta chance de
           aprovação.
